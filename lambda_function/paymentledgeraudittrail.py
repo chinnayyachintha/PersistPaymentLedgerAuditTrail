@@ -2,7 +2,8 @@ import boto3
 import os
 from botocore.exceptions import ClientError
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+from decimal import Decimal
 
 # Retrieve environment variables
 DYNAMODB_LEDGER_TABLE_NAME = os.getenv('DYNAMODB_LEDGER_TABLE_NAME')
@@ -105,12 +106,17 @@ def persist_payment_success(transaction_id, amount, processor_id):
 # Step 6: Create Audit Trail for Successful Payment
 def persist_payment_audit_trail(transaction_id, query_details, response_data):
     try:
+        # Generate a unique AuditID
+        audit_id = str(uuid.uuid4())  # Ensure a unique ID for the audit entry
+        
+        # Add the AuditID to the audit item
         audit_table.put_item(
             Item={
-                'TransactionID': transaction_id,
-                'QueryDetails': query_details,
-                'ResponseData': response_data,
-                'Timestamp': str(datetime.utcnow())
+                'AuditID': audit_id,               # Unique primary key
+                'TransactionID': transaction_id,   # Foreign key to payment ledger
+                'QueryDetails': query_details,     # Audit information
+                'ResponseData': response_data,     # Processor response or other details
+                'Timestamp': str(datetime.now(timezone.utc))  # Time in UTC with timezone
             }
         )
     except ClientError as e:
@@ -136,7 +142,7 @@ def send_payment_success_response(transaction_id):
 def lambda_handler(event, context):
     try:
         # Step 1: Persist Payment Initiation
-        amount = event['amount']
+        amount = Decimal(str(event['amount']))
         processor_id = event['processor_id']
         transaction_id = persist_payment_ledger(amount, processor_id)
         

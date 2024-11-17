@@ -29,10 +29,13 @@ resource "aws_iam_role_policy" "paymentaudittrail_policy" {
         Effect = "Allow"
         Action = [
           "kms:Encrypt",
-          "kms:Decrypt"
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey"
         ]
         Resource = [
-          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.ledger_audit_key.id}"
+          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.ledger_audit_key.id}",
+          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_alias.ledger_audit_key_alias.name}"
         ]
       },
 
