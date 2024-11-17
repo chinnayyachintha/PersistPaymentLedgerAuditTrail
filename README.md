@@ -1,4 +1,4 @@
-# Payment Processing System - README
+# Payment Processing System 
 
 ## Overview
 
