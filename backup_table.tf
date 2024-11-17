@@ -1,7 +1,7 @@
 # AWS Backup Vault for Payment Ledger & Payment Audit Trail (using the same vault with different encryption)
 resource "aws_backup_vault" "payment_backup_vault" {
   name        = "${var.dynamodb_table_name}-LedgerAuditTrail-backup-vault"
-  kms_key_arn = aws_kms_key.ledger_audit_key.key_id # Default encryption key for both tables
+  kms_key_arn =  aws_kms_key.ledger_audit_key.arn # KMS Key for encryption
 }
 
 # AWS Backup Plan for daily backups of DynamoDB tables

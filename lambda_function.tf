@@ -10,9 +10,9 @@ resource "aws_lambda_function" "paymentledgeraudittrail" {
 
   environment {
     variables = {
-      DYNAMODB_LEDGER_TABLE_NAME       = aws_dynamodb_table.payment_ledger.name
-      DYNAMODB_AUDIT_TABLE_NAME = aws_dynamodb_table.payment_audit_trail.name
-      KMS_KEY_ARN               = aws_kms_key.ledger_audit_key.arn
+      DYNAMODB_LEDGER_TABLE_NAME = aws_dynamodb_table.payment_ledger.name
+      DYNAMODB_AUDIT_TABLE_NAME  = aws_dynamodb_table.payment_audit_trail.name
+      KMS_KEY_ARN                = aws_kms_key.ledger_audit_key.arn
     }
   }
 
