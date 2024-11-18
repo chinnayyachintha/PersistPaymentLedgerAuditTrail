@@ -1,4 +1,3 @@
-# IAM Role for Payment Ledger and Audit Trail Processing
 resource "aws_iam_role" "paymentaudittrail_role" {
   name = "${var.dynamodb_table_name}-ledgeraudittrail-role"
 
@@ -16,7 +15,6 @@ resource "aws_iam_role" "paymentaudittrail_role" {
   })
 }
 
-# IAM Role Policy for Payment Ledger and Audit Trail
 resource "aws_iam_role_policy" "paymentaudittrail_policy" {
   name = "${var.dynamodb_table_name}-ledgeraudittrail-policy"
   role = aws_iam_role.paymentaudittrail_role.id
@@ -39,7 +37,7 @@ resource "aws_iam_role_policy" "paymentaudittrail_policy" {
         ]
       },
 
-      # Permissions for DynamoDB
+      # Permissions for DynamoDB (Reading and Writing Data)
       {
         Effect = "Allow"
         Action = [
