@@ -1,6 +1,6 @@
 resource "aws_cloudwatch_event_rule" "monthly_backup_schedule" {
   name                = "monthly_backup_schedule"
-  schedule_expression = cron(0 0 1 * ? *) # Runs at midnight on the 1st of every month
+  schedule_expression = "cron(0 0 1 * ? *)" # Runs at midnight on the 1st of every month
 }
 
 resource "aws_cloudwatch_event_target" "backup_lambda_target" {
