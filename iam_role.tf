@@ -32,12 +32,12 @@ resource "aws_iam_role_policy" "paymentaudittrail_policy" {
           "kms:DescribeKey"
         ]
         Resource = [
-          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_key.ledger_audit_key.id}",
-          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/${aws_kms_alias.ledger_audit_key_alias.name}"
+          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*",
+          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alias/*"
         ]
       },
 
-      # Permissions for DynamoDB (Reading and Writing Data)
+      # Permissions for DynamoDB
       {
         Effect = "Allow"
         Action = [
@@ -45,18 +45,7 @@ resource "aws_iam_role_policy" "paymentaudittrail_policy" {
           "dynamodb:GetItem",
           "dynamodb:Query",
           "dynamodb:UpdateItem",
-          "dynamodb:Scan"
-        ]
-        Resource = [
-          "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${aws_dynamodb_table.payment_ledger.name}",
-          "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${aws_dynamodb_table.payment_audit_trail.name}"
-        ]
-      },
-
-      # Permissions for Exporting DynamoDB to S3
-      {
-        Effect = "Allow"
-        Action = [
+          "dynamodb:Scan",
           "dynamodb:ExportTableToPointInTime",
           "dynamodb:DescribeContinuousBackups",
           "dynamodb:DescribeExport",
@@ -64,19 +53,20 @@ resource "aws_iam_role_policy" "paymentaudittrail_policy" {
           "dynamodb:DescribeTable"
         ]
         Resource = [
-          "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${aws_dynamodb_table.payment_ledger.name}",
-          "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${aws_dynamodb_table.payment_audit_trail.name}"
+          "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/*"
         ]
       },
 
-      # S3 Permissions for Backup Storage
+      # Permissions for S3
       {
         Effect = "Allow"
         Action = [
           "s3:PutObject",
           "s3:GetObject",
           "s3:ListBucket",
-          "s3:DeleteObject"
+          "s3:DeleteObject",
+          "s3:GetBucketLocation",
+          "s3:PutObjectAcl"
         ]
         Resource = [
           "arn:aws:s3:::${var.s3_backup_bucket_name}",
@@ -92,18 +82,21 @@ resource "aws_iam_role_policy" "paymentaudittrail_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/*"
+        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:*"
       },
 
-      # Lambda VPC permissions
+      # Lambda VPC Permissions
       {
         Effect = "Allow"
         Action = [
           "ec2:CreateNetworkInterface",
           "ec2:DescribeNetworkInterfaces",
-          "ec2:DeleteNetworkInterface"
+          "ec2:DeleteNetworkInterface",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSecurityGroups"
         ]
-        Resource = "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:network-interface/*"
+        Resource = "*"
       }
     ]
   })
