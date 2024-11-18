@@ -35,7 +35,8 @@ resource "aws_lambda_function" "dynamodb_backup" {
   environment {
     variables = {
       # Comma-separated list of DynamoDB table ARNs to backup
-      TABLES_TO_BACKUP = "${aws_dynamodb_table.payment_ledger.arn},${aws_dynamodb_table.payment_audit_trail.arn}" 
+      DYNAMODB_LEDGER_TABLE_NAME = aws_dynamodb_table.payment_ledger.name
+      DYNAMODB_AUDIT_TABLE_NAME  = aws_dynamodb_table.payment_audit_trail.name
       S3_BUCKET        = aws_s3_bucket.dynamodb_backup.id
     }
   }
