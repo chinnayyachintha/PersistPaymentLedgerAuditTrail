@@ -152,9 +152,9 @@ def lambda_handler(event, context):
         # Step 3: Update Payment Status to Pending
         update_payment_status(transaction_id, "PAYMENT-PENDING")
         
-        # Step 4: Simulate Payment Processor Response (Example: Payroc)
+        # Step 4: Simulate Payment Processor Response (Example: Elavon)
         processor_response = {
-            'status': 'success',  # Simulate a successful payment response from Payroc
+            'status': 'success',  # Simulate a successful payment response from Elavon
             'transaction_id': transaction_id,
             'amount': amount,
             'processor_id': processor_id

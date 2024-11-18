@@ -13,17 +13,17 @@ This system handles payment processing for transactions involving sensitive data
   - **TransactionID**: Unique identifier for the transaction.
   - **SecureToken**: Tokenized payment information.
   - **Amount**: The transaction amount.
-  - **ProcessorID**: Identifies the payment processor (e.g., Payroc).
+  - **ProcessorID**: Identifies the payment processor (e.g., Elavon).
   - **Status**: Set to `PAYMENT-INITIATED` to mark the start of the transaction.
 
 #### Outcome
 - The `PaymentLedger` stores a record of the payment with the status `PAYMENT-INITIATED`.
 
-### 2. **Create Security Token (for processor 'Payroc')**
+### 2. **Create Security Token (for processor 'Elavon')**
 
 - The security token (`SecureToken`) is encrypted using AWS KMS inside the `encrypt_token` function.
 - This encryption ensures that sensitive payment data is securely protected before being passed to the payment processor.
-- The encrypted token is used by the processor (Payroc) to authorize the payment request.
+- The encrypted token is used by the processor (Elavon) to authorize the payment request.
 
 ### 3. **Create Ledger Entry for Payment Pending (PAYMENT-PENDING)**
 
@@ -33,9 +33,9 @@ This system handles payment processing for transactions involving sensitive data
 #### Outcome
 - The `PaymentLedger` entry updates with the status `PAYMENT-PENDING`.
 
-### 4. **Payment Intent (Processor 'Payroc') Payment Success**
+### 4. **Payment Intent (Processor 'Elavon') Payment Success**
 
-- Once Payroc processes the payment, it communicates the outcome (success or failure).
+- Once Elavon processes the payment, it communicates the outcome (success or failure).
 - If the payment is successful, the payment status is updated to `PAYMENT-SUCCESS`.
 
 #### Outcome
@@ -49,7 +49,7 @@ This system handles payment processing for transactions involving sensitive data
 ### 6. **Create Audit Trail for Successful Payment**
 
 - The `persist_payment_audit_trail` function creates an audit trail entry for the payment transaction.
-- The audit logs query details and the response from the payment processor (Payroc).
+- The audit logs query details and the response from the payment processor (Elavon).
 - Both the query details and response are encrypted before being stored in the `DynamoDB_AUDIT_TABLE`.
 
 #### Outcome
