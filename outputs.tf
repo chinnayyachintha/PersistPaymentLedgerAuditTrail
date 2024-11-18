@@ -57,3 +57,22 @@ output "payment_backup_selection_id" {
   description = "The ID of the AWS Backup Selection for DynamoDB tables"
   value       = aws_backup_selection.payment_backup_selection.id
 }
+
+# Backup for DynamoDB to S3
+# Output for the DynamoDB Backup Lambda ARN
+output "dynamodb_backup_lambda_arn" {
+  description = "ARN of the DynamoDB backup Lambda function"
+  value       = aws_lambda_function.dynamodb_backup.arn
+}
+
+# Output for the S3 Bucket used for DynamoDB Backup
+output "dynamodb_backup_s3_bucket" {
+  description = "S3 bucket name for DynamoDB backups"
+  value       = aws_s3_bucket.dynamodb_backup.bucket
+}
+
+# Output for Lambda Function Timeout (for backup Lambda)
+output "dynamodb_backup_lambda_timeout" {
+  description = "Timeout for the DynamoDB backup Lambda function"
+  value       = aws_lambda_function.dynamodb_backup.timeout
+}

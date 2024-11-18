@@ -24,7 +24,7 @@ resource "aws_iam_role_policy" "paymentaudittrail_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      # Permissions for KMS (for both Payment Ledger and Audit Trail)
+      # Permissions for KMS
       {
         Effect = "Allow"
         Action = [
@@ -39,7 +39,7 @@ resource "aws_iam_role_policy" "paymentaudittrail_policy" {
         ]
       },
 
-      # Permissions for DynamoDB (for both Payment Ledger and Audit Trail)
+      # Permissions for DynamoDB
       {
         Effect = "Allow"
         Action = [
@@ -55,7 +55,38 @@ resource "aws_iam_role_policy" "paymentaudittrail_policy" {
         ]
       },
 
-      # Permissions for CloudWatch Logs (for both Payment Ledger and Audit Trail)
+      # Permissions for Exporting DynamoDB to S3
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:ExportTableToPointInTime",
+          "dynamodb:DescribeContinuousBackups",
+          "dynamodb:DescribeExport",
+          "dynamodb:ListExports",
+          "dynamodb:DescribeTable"
+        ]
+        Resource = [
+          "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${aws_dynamodb_table.payment_ledger.name}",
+          "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${aws_dynamodb_table.payment_audit_trail.name}"
+        ]
+      },
+
+      # S3 Permissions for Backup Storage
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:DeleteObject"
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.s3_backup_bucket_name}",
+          "arn:aws:s3:::${var.s3_backup_bucket_name}/*"
+        ]
+      },
+
+      # CloudWatch Logs Permissions
       {
         Effect = "Allow"
         Action = [
@@ -66,7 +97,7 @@ resource "aws_iam_role_policy" "paymentaudittrail_policy" {
         Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/*"
       },
 
-      # Permissions for EC2 network interfaces (needed for Lambda in VPC)
+      # Lambda VPC permissions
       {
         Effect = "Allow"
         Action = [
@@ -74,32 +105,7 @@ resource "aws_iam_role_policy" "paymentaudittrail_policy" {
           "ec2:DescribeNetworkInterfaces",
           "ec2:DeleteNetworkInterface"
         ]
-        Resource = "*"
-      },
-
-      # Backup Permissions for DynamoDB (for Payment Ledger only)
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:ListTables",
-          "dynamodb:DescribeTable",
-          "dynamodb:ListStreams",
-          "dynamodb:DescribeStream"
-        ]
-        Resource = "*"
-      },
-
-      # Backup Permissions for DynamoDB (for Payment Ledger only)
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:CreateBackup",
-          "dynamodb:DeleteBackup",
-          "dynamodb:DescribeBackup",
-          "dynamodb:ListBackups"
-        ]
-        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${aws_dynamodb_table.payment_ledger.name}",
-        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${aws_dynamodb_table.payment_audit_trail.name}"
+        Resource = "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:network-interface/*"
       }
     ]
   })

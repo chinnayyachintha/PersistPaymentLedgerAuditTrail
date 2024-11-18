@@ -23,3 +23,27 @@ resource "aws_lambda_function" "paymentledgeraudittrail" {
 
   timeout = 60
 }
+
+# Lambda Function for DynamoDB Backup
+resource "aws_lambda_function" "dynamodb_backup" {
+  filename         = "lambda_function/dynamodb_backup.zip" # Replace with your Lambda zip file
+  function_name    = "LedgerAuditTrail-dynamodb_backup"
+  role             = aws_iam_role.paymentaudittrail_role.arn
+  handler          = "dynamodb_backup.lambda_handler"
+  runtime          = "python3.9"
+
+  environment {
+    variables = {
+      # Comma-separated list of DynamoDB table ARNs to backup
+      TABLES_TO_BACKUP = "${aws_dynamodb_table.payment_ledger.arn},${aws_dynamodb_table.payment_audit_trail.arn}" 
+      S3_BUCKET        = aws_s3_bucket.dynamodb_backup.id
+    }
+  }
+
+  timeout = 300  # Adjust timeout based on expected backup duration
+
+  vpc_config {
+    subnet_ids         = [data.aws_subnet.private_subnet.id]     # Reference the private subnet
+    security_group_ids = [data.aws_security_group.private_sg.id] # Reference the security group
+  }
+}
