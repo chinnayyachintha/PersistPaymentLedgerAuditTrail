@@ -4,6 +4,11 @@ from botocore.exceptions import ClientError
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
+import logging
+
+# Setup logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 # Retrieve environment variables
 DYNAMODB_LEDGER_TABLE_NAME = os.getenv('DYNAMODB_LEDGER_TABLE_NAME')
@@ -27,6 +32,7 @@ def encrypt_token(token):
         )
         return response['CiphertextBlob']
     except ClientError as e:
+        logger.error(f"Error encrypting token: {e.response['Error']['Message']}")
         raise Exception(f"Error encrypting token: {e.response['Error']['Message']}")
 
 # Step 1: Persist Payment Ledger Entry (Payment Initiation)
@@ -44,8 +50,10 @@ def persist_payment_ledger(amount, processor_id):
                 'Timestamp': str(datetime.utcnow())
             }
         )
+        logger.info(f"Payment ledger entry created for transaction {transaction_id}")
         return transaction_id
     except ClientError as e:
+        logger.error(f"Error storing payment initiation: {e.response['Error']['Message']}")
         raise Exception(f"Error storing payment initiation: {e.response['Error']['Message']}")
 
 # Step 2: Encrypt Token for Processor
@@ -64,7 +72,9 @@ def update_payment_status(transaction_id, status):
             ExpressionAttributeValues={':status': status},
             ReturnValues="UPDATED_NEW"
         )
+        logger.info(f"Payment status updated for transaction {transaction_id} to {status}")
     except ClientError as e:
+        logger.error(f"Error updating payment status: {e.response['Error']['Message']}")
         raise Exception(f"Error updating payment status: {e.response['Error']['Message']}")
 
 # Step 4: Process Payment Response
@@ -97,6 +107,7 @@ def process_payment_response(transaction_id, amount, processor_id, processor_res
             }
 
     except Exception as e:
+        logger.error(f"Error processing payment response: {str(e)}")
         raise Exception(f"Error processing payment response: {str(e)}")
 
 # Step 5: Normalize Processor Response
@@ -121,7 +132,9 @@ def persist_payment_success(transaction_id, amount, processor_id):
                 'Timestamp': str(datetime.utcnow())
             }
         )
+        logger.info(f"Payment success entry created for transaction {transaction_id}")
     except ClientError as e:
+        logger.error(f"Error creating payment success entry: {e.response['Error']['Message']}")
         raise Exception(f"Error creating payment success entry: {e.response['Error']['Message']}")
 
 # Step 7: Create Audit Trail
@@ -137,7 +150,9 @@ def persist_payment_audit_trail(transaction_id, query_details, response_data):
                 'Timestamp': str(datetime.now(timezone.utc))
             }
         )
+        logger.info(f"Audit trail created for transaction {transaction_id}")
     except ClientError as e:
+        logger.error(f"Error creating audit trail: {e.response['Error']['Message']}")
         raise Exception(f"Error creating audit trail: {e.response['Error']['Message']}")
 
 # Step 8: Send Success Response to API
@@ -158,6 +173,7 @@ def lambda_handler(event, context):
 
         update_payment_status(transaction_id, "PAYMENT-PENDING")
 
+        # Simulate a payment processor response
         processor_response = {
             'status': event.get('simulate_status', 'success'),
             'transaction_id': transaction_id,
@@ -165,9 +181,11 @@ def lambda_handler(event, context):
             'processor_id': processor_id
         }
 
+        # Return processed payment response
         return process_payment_response(transaction_id, amount, processor_id, processor_response)
 
     except Exception as e:
+        logger.error(f"Error in payment processing flow: {str(e)}")
         return {
             'statusCode': 500,
             'body': f"Error in payment processing flow: {str(e)}"
