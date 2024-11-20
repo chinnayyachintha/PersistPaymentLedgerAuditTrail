@@ -10,16 +10,16 @@ resource "aws_lambda_function" "paymentledgeraudittrail" {
     variables = {
       DYNAMODB_LEDGER_TABLE_NAME = aws_dynamodb_table.payment_ledger.name
       DYNAMODB_AUDIT_TABLE_NAME  = aws_dynamodb_table.payment_audit_trail.name
-      KMS_KEY_ARN          = aws_kms_alias.ledger_audit_key_alias.arn
+      KMS_KEY_ARN                = aws_kms_alias.ledger_audit_key_alias.arn
     }
   }
 
   timeout = 300
 
-  vpc_config {
-    subnet_ids         = [data.aws_subnet.private_subnet.id]
-    security_group_ids = [data.aws_security_group.private_sg.id]
-  }
+  # vpc_config {
+  #   subnet_ids         = [data.aws_subnet.private_subnet.id]
+  #   security_group_ids = [data.aws_security_group.private_sg.id]
+  # }
 }
 
 resource "aws_lambda_function" "dynamodb_backup" {
@@ -39,9 +39,9 @@ resource "aws_lambda_function" "dynamodb_backup" {
 
   timeout = 300
 
-  vpc_config {
-    subnet_ids         = [data.aws_subnet.private_subnet.id]
-    security_group_ids = [data.aws_security_group.private_sg.id]
-  }
+  # vpc_config {
+  #   subnet_ids         = [data.aws_subnet.private_subnet.id]
+  #   security_group_ids = [data.aws_security_group.private_sg.id]
+  # }
 }
 
