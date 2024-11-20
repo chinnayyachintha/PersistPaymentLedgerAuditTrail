@@ -38,7 +38,7 @@ def encrypt_token(token):
 # Step 1: Persist Payment Ledger Entry (Payment Initiation)
 def persist_payment_ledger(amount, processor_id):
     transaction_id = str(uuid.uuid4())  # Unique Transaction ID
-    status = "PAYMENT-INITIATED"
+    status = "Initiated"  # Status set to 'Initiated' when payment is created
     
     try:
         payment_ledger_table.put_item(
@@ -84,20 +84,20 @@ def process_payment_response(transaction_id, amount, processor_id, processor_res
     try:
         update_payment_status(transaction_id, normalized_status)
 
-        if normalized_status == "PAYMENT-SUCCESS":
+        if normalized_status == "Completed":
             persist_payment_success(transaction_id, amount, processor_id)
             query_details = f"Payment successful for amount: {amount} using processor: {processor_id}"
             response_data = f"Processor response: {processor_response}"
             persist_payment_audit_trail(transaction_id, query_details, response_data)
             return send_payment_success_response(transaction_id)
 
-        elif normalized_status == "PAYMENT-FAILED":
+        elif normalized_status == "Failed":
             query_details = f"Failed payment for amount: {amount} using processor: {processor_id}"
             response_data = f"Processor response: {processor_response}"
             persist_payment_audit_trail(transaction_id, query_details, response_data)
             raise Exception(f"Payment failed for transaction {transaction_id}")
 
-        elif normalized_status == "PAYMENT-PENDING":
+        elif normalized_status == "Pending":
             query_details = f"Payment pending for amount: {amount} using processor: {processor_id}"
             response_data = f"Processor response: {processor_response}"
             persist_payment_audit_trail(transaction_id, query_details, response_data)
@@ -112,16 +112,16 @@ def process_payment_response(transaction_id, amount, processor_id, processor_res
 
 # Step 5: Normalize Processor Response
 def normalize_processor_response(response):
-    if response['status'] == 'success':
-        return 'PAYMENT-SUCCESS'
+    if response['status'] == 'success' or response['status'] == 'Completed':
+        return 'Completed'  # This maps 'success' or 'Completed' to 'Completed'
     elif response['status'] == 'failure':
-        return 'PAYMENT-FAILED'
+        return 'Failed'  # This maps 'failure' to 'Failed'
     else:
-        return 'PAYMENT-PENDING'
+        return 'Pending'  # Anything else is treated as 'Pending'
 
 # Step 6: Persist Payment Success Ledger Entry
 def persist_payment_success(transaction_id, amount, processor_id):
-    status = "PAYMENT-SUCCESS"
+    status = "Completed"  # Update to 'Completed' status once payment is successful
     try:
         payment_ledger_table.put_item(
             Item={
@@ -171,11 +171,11 @@ def lambda_handler(event, context):
 
         encrypted_token = create_secure_token(amount, processor_id)
 
-        update_payment_status(transaction_id, "PAYMENT-PENDING")
+        update_payment_status(transaction_id, "InProgress")  # Status updated to InProgress as payment is being processed
 
         # Simulate a payment processor response
         processor_response = {
-            'status': event.get('simulate_status', 'success'),
+            'status': event.get('simulate_status', 'success'),  # Accepts 'Completed' too
             'transaction_id': transaction_id,
             'amount': amount,
             'processor_id': processor_id
