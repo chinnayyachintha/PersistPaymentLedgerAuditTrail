@@ -35,11 +35,10 @@ def encrypt_token(token):
         logger.error(f"Error encrypting token: {e.response['Error']['Message']}")
         raise Exception(f"Error encrypting token: {e.response['Error']['Message']}")
 
-# Step 1: Persist Payment Ledger Entry (Payment Initiation)
+# Step 1: Persist Payment Ledger Entry
 def persist_payment_ledger(amount, processor_id):
-    transaction_id = str(uuid.uuid4())  # Unique Transaction ID
-    status = "Initiated"  # Status set to 'Initiated' when payment is created
-    
+    transaction_id = str(uuid.uuid4())
+    status = "Initiated"
     try:
         payment_ledger_table.put_item(
             Item={
@@ -59,8 +58,7 @@ def persist_payment_ledger(amount, processor_id):
 # Step 2: Encrypt Token for Processor
 def create_secure_token(amount, processor_id):
     token = f"TokenFor:{amount}:{processor_id}"
-    encrypted_token = encrypt_token(token)
-    return encrypted_token
+    return encrypt_token(token)
 
 # Step 3: Update Payment Status
 def update_payment_status(transaction_id, status):
@@ -77,67 +75,19 @@ def update_payment_status(transaction_id, status):
         logger.error(f"Error updating payment status: {e.response['Error']['Message']}")
         raise Exception(f"Error updating payment status: {e.response['Error']['Message']}")
 
-# Step 4: Process Payment Response
-def process_payment_response(transaction_id, amount, processor_id, processor_response):
-    normalized_status = normalize_processor_response(processor_response)
-
-    try:
-        update_payment_status(transaction_id, normalized_status)
-
-        if normalized_status == "Completed":
-            persist_payment_success(transaction_id, amount, processor_id)
-            query_details = f"Payment successful for amount: {amount} using processor: {processor_id}"
-            response_data = f"Processor response: {processor_response}"
-            persist_payment_audit_trail(transaction_id, query_details, response_data)
-            return send_payment_success_response(transaction_id)
-
-        elif normalized_status == "Failed":
-            query_details = f"Failed payment for amount: {amount} using processor: {processor_id}"
-            response_data = f"Processor response: {processor_response}"
-            persist_payment_audit_trail(transaction_id, query_details, response_data)
-            raise Exception(f"Payment failed for transaction {transaction_id}")
-
-        elif normalized_status == "Pending":
-            query_details = f"Payment pending for amount: {amount} using processor: {processor_id}"
-            response_data = f"Processor response: {processor_response}"
-            persist_payment_audit_trail(transaction_id, query_details, response_data)
-            return {
-                'statusCode': 202,
-                'body': f"Payment is pending for transaction {transaction_id}"
-            }
-
-    except Exception as e:
-        logger.error(f"Error processing payment response: {str(e)}")
-        raise Exception(f"Error processing payment response: {str(e)}")
-
-# Step 5: Normalize Processor Response
+# Step 4: Normalize Processor Response
 def normalize_processor_response(response):
-    if response['status'] == 'success' or response['status'] == 'Completed':
-        return 'Completed'  # This maps 'success' or 'Completed' to 'Completed'
-    elif response['status'] == 'failure':
-        return 'Failed'  # This maps 'failure' to 'Failed'
+    status = response.get('status', '').lower()
+    if status == 'success':
+        return 'success'
+    elif status == 'completed':
+        return 'completed'
+    elif status == 'failure':
+        return 'failed'
     else:
-        return 'Pending'  # Anything else is treated as 'Pending'
+        return 'pending'
 
-# Step 6: Persist Payment Success Ledger Entry
-def persist_payment_success(transaction_id, amount, processor_id):
-    status = "Completed"  # Update to 'Completed' status once payment is successful
-    try:
-        payment_ledger_table.put_item(
-            Item={
-                'TransactionID': transaction_id,
-                'Amount': amount,
-                'ProcessorID': processor_id,
-                'Status': status,
-                'Timestamp': str(datetime.utcnow())
-            }
-        )
-        logger.info(f"Payment success entry created for transaction {transaction_id}")
-    except ClientError as e:
-        logger.error(f"Error creating payment success entry: {e.response['Error']['Message']}")
-        raise Exception(f"Error creating payment success entry: {e.response['Error']['Message']}")
-
-# Step 7: Create Audit Trail
+# Step 5: Persist Audit Trail
 def persist_payment_audit_trail(transaction_id, query_details, response_data):
     try:
         audit_id = str(uuid.uuid4())
@@ -155,33 +105,73 @@ def persist_payment_audit_trail(transaction_id, query_details, response_data):
         logger.error(f"Error creating audit trail: {e.response['Error']['Message']}")
         raise Exception(f"Error creating audit trail: {e.response['Error']['Message']}")
 
-# Step 8: Send Success Response to API
-def send_payment_success_response(transaction_id):
-    return {
-        'statusCode': 200,
-        'body': f'Payment completed successfully for transaction {transaction_id}'
-    }
+# Step 6: Process Payment Response
+def process_payment_response(transaction_id, amount, processor_id, processor_response):
+    normalized_status = normalize_processor_response(processor_response)
+    query_details = f"Payment processed for amount: {amount} using processor: {processor_id}"
+    response_data = f"Processor response: {processor_response}"
 
-# Main Lambda Handler
+    try:
+        # Handle statuses
+        if normalized_status == 'success':
+            update_payment_status(transaction_id, "Success")
+            persist_payment_audit_trail(transaction_id, query_details, response_data)
+            return {
+                'statusCode': 200,
+                'body': f"Payment succeeded for transaction {transaction_id}"
+            }
+
+        elif normalized_status == 'completed':
+            update_payment_status(transaction_id, "Completed")
+            persist_payment_audit_trail(transaction_id, query_details, response_data)
+            return {
+                'statusCode': 200,
+                'body': f"Payment completd for transaction {transaction_id}"
+            }
+
+        elif normalized_status == 'failed':
+            update_payment_status(transaction_id, "Failed")
+            persist_payment_audit_trail(transaction_id, query_details, response_data)
+            return {
+                'statusCode': 400,
+                'body': f"Payment failed for transaction {transaction_id}"
+            }
+
+        elif normalized_status == 'pending':
+            update_payment_status(transaction_id, "Pending")
+            persist_payment_audit_trail(transaction_id, query_details, response_data)
+            return {
+                'statusCode': 202,
+                'body': f"Payment is pending for transaction {transaction_id}"
+            }
+
+    except Exception as e:
+        logger.error(f"Error processing payment response: {str(e)}")
+        raise Exception(f"Error processing payment response: {str(e)}")
+
+# Lambda Handler Function
 def lambda_handler(event, context):
     try:
+        # Extract and validate input
         amount = Decimal(str(event['amount']))
         processor_id = event['processor_id']
+        simulate_status = event.get('simulate_status', '').lower()
+
+        # Step 1: Persist the payment ledger entry
         transaction_id = persist_payment_ledger(amount, processor_id)
 
+        # Step 2: Create a secure token
         encrypted_token = create_secure_token(amount, processor_id)
 
-        update_payment_status(transaction_id, "InProgress")  # Status updated to InProgress as payment is being processed
-
-        # Simulate a payment processor response
+        # Step 3: Simulate the processor response
         processor_response = {
-            'status': event.get('simulate_status', 'success'),  # Accepts 'Completed' too
+            'status': simulate_status,
             'transaction_id': transaction_id,
             'amount': amount,
             'processor_id': processor_id
         }
 
-        # Return processed payment response
+        # Step 4: Process the simulated payment response
         return process_payment_response(transaction_id, amount, processor_id, processor_response)
 
     except Exception as e:

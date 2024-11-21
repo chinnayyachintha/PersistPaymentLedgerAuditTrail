@@ -32,12 +32,12 @@ resource "aws_dynamodb_table" "payment_ledger" {
 
   attribute {
     name = "OriginalTransactionID"
-    type = "S"  # Reference to the original transaction for voids
+    type = "S" # Reference to the original transaction for voids
   }
 
   attribute {
     name = "Reason"
-    type = "S"  # Reason for the void/reversal
+    type = "S" # Reason for the void/reversal
   }
 
   # Global Secondary Indexes for querying by attributes that need indexing
@@ -136,12 +136,12 @@ resource "aws_dynamodb_table" "payment_audit_trail" {
 
   attribute {
     name = "VoidTransactionID"
-    type = "S"  # Index this attribute if you need to query by it
+    type = "S" # Index this attribute if you need to query by it
   }
 
   attribute {
     name = "Reason"
-    type = "S"  # Index this attribute if you need to query by it
+    type = "S" # Index this attribute if you need to query by it
   }
 
   # Global Secondary Indexes (GSI)
