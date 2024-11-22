@@ -23,7 +23,7 @@ resource "aws_dynamodb_table" "payment_ledger" {
 
   attribute {
     name = "Source"
-    type = "S"  # Added Source attribute
+    type = "S" # Added Source attribute
   }
 
   attribute {
@@ -57,7 +57,7 @@ resource "aws_dynamodb_table" "payment_ledger" {
 
   global_secondary_index {
     name            = "Source-index"
-    hash_key        = "Source"  # Index for Source
+    hash_key        = "Source" # Index for Source
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
@@ -159,7 +159,7 @@ resource "aws_dynamodb_table" "payment_audit_trail" {
 
   attribute {
     name = "Source"
-    type = "S"  # Added Source attribute
+    type = "S" # Added Source attribute
   }
 
   # Global Secondary Indexes (GSI)
@@ -229,7 +229,7 @@ resource "aws_dynamodb_table" "payment_audit_trail" {
 
   global_secondary_index {
     name            = "Source-Index"
-    hash_key        = "Source"  # Index for Source
+    hash_key        = "Source" # Index for Source
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
