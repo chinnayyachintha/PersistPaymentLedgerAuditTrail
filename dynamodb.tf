@@ -1,3 +1,5 @@
+I'd be glad to provide a response that incorporates the best aspects of the previous responses and addresses the potential issues:
+Updated Terraform Configuration:
 resource "aws_dynamodb_table" "payment_ledger" {
   name           = "${var.dynamodb_table_name}Ledger"
   billing_mode   = "PROVISIONED"
@@ -10,6 +12,7 @@ resource "aws_dynamodb_table" "payment_ledger" {
   }
 
   hash_key = "TransactionID"
+
   attribute {
     name = "TransactionID"
     type = "S"
@@ -18,6 +21,11 @@ resource "aws_dynamodb_table" "payment_ledger" {
   attribute {
     name = "Amount"
     type = "N"
+  }
+
+  attribute {
+    name = "Source"
+    type = "S"
   }
 
   attribute {
@@ -44,6 +52,14 @@ resource "aws_dynamodb_table" "payment_ledger" {
   global_secondary_index {
     name            = "Amount-index"
     hash_key        = "Amount"
+    projection_type = "ALL"
+    read_capacity   = 5
+    write_capacity  = 5
+  }
+
+  global_secondary_index {
+    name            = "Source-index"
+    hash_key        = "Source"
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
@@ -193,7 +209,6 @@ resource "aws_dynamodb_table" "payment_audit_trail" {
     write_capacity  = 5
   }
 
-  # Add GSIs for newly added attributes
   global_secondary_index {
     name            = "VoidTransactionID-Index"
     hash_key        = "VoidTransactionID"
@@ -214,3 +229,5 @@ resource "aws_dynamodb_table" "payment_audit_trail" {
     Name = "${var.dynamodb_table_name}-audit-trail"
   }
 }
+
+
