@@ -11,8 +11,19 @@ resource "aws_dynamodb_table" "payment_ledger" {
 
   hash_key = "TransactionID"
 
+  # Attributes for the Payment Ledger table
   attribute {
     name = "TransactionID"
+    type = "S"
+  }
+
+  attribute {
+    name = "TransactionType"
+    type = "S"
+  }
+
+  attribute {
+    name = "Source"
     type = "S"
   }
 
@@ -22,8 +33,13 @@ resource "aws_dynamodb_table" "payment_ledger" {
   }
 
   attribute {
-    name = "Source"
-    type = "S" # Added Source attribute
+    name = "Currency"
+    type = "S"
+  }
+
+  attribute {
+    name = "ProcessorID"
+    type = "S"
   }
 
   attribute {
@@ -37,27 +53,34 @@ resource "aws_dynamodb_table" "payment_ledger" {
   }
 
   attribute {
-    name = "OriginalTransactionID"
-    type = "S" # Reference to the original transaction for voids
+    name = "Initiator"
+    type = "S"
   }
 
   attribute {
     name = "Reason"
-    type = "S" # Reason for the void/reversal
+    type = "S"
+  }
+
+  attribute {
+    name = "Metadata"
+    type = "S"
+  }
+
+  attribute {
+    name = "UserID"
+    type = "S"
+  }
+
+  attribute {
+    name = "Environment"
+    type = "S"
   }
 
   # Global Secondary Indexes for querying by attributes that need indexing
   global_secondary_index {
-    name            = "Amount-index"
-    hash_key        = "Amount"
-    projection_type = "ALL"
-    read_capacity   = 5
-    write_capacity  = 5
-  }
-
-  global_secondary_index {
-    name            = "Source-index"
-    hash_key        = "Source" # Index for Source
+    name            = "TransactionType-index"
+    hash_key        = "TransactionType"
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
@@ -72,6 +95,14 @@ resource "aws_dynamodb_table" "payment_ledger" {
   }
 
   global_secondary_index {
+    name            = "Source-index"
+    hash_key        = "Source"
+    projection_type = "ALL"
+    read_capacity   = 5
+    write_capacity  = 5
+  }
+
+  global_secondary_index {
     name            = "Timestamp-index"
     hash_key        = "Timestamp"
     projection_type = "ALL"
@@ -80,16 +111,16 @@ resource "aws_dynamodb_table" "payment_ledger" {
   }
 
   global_secondary_index {
-    name            = "OriginalTransactionID-index"
-    hash_key        = "OriginalTransactionID"
+    name            = "UserID-index"
+    hash_key        = "UserID"
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
   }
 
   global_secondary_index {
-    name            = "Reason-index"
-    hash_key        = "Reason"
+    name            = "Environment-index"
+    hash_key        = "Environment"
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
@@ -112,6 +143,7 @@ resource "aws_dynamodb_table" "payment_audit_trail" {
 
   hash_key = "AuditID"
 
+  # Attributes for the Payment Audit Trail table
   attribute {
     name = "AuditID"
     type = "S"
@@ -123,12 +155,42 @@ resource "aws_dynamodb_table" "payment_audit_trail" {
   }
 
   attribute {
+    name = "TransactionType"
+    type = "S"
+  }
+
+  attribute {
+    name = "Source"
+    type = "S"
+  }
+
+  attribute {
     name = "Action"
     type = "S"
   }
 
   attribute {
-    name = "Actor"
+    name = "Status"
+    type = "S"
+  }
+
+  attribute {
+    name = "Amount"
+    type = "N"
+  }
+
+  attribute {
+    name = "Currency"
+    type = "S"
+  }
+
+  attribute {
+    name = "Reason"
+    type = "S"
+  }
+
+  attribute {
+    name = "Initiator"
     type = "S"
   }
 
@@ -138,98 +200,75 @@ resource "aws_dynamodb_table" "payment_audit_trail" {
   }
 
   attribute {
-    name = "QueryDetails"
+    name = "Metadata"
     type = "S"
   }
 
   attribute {
-    name = "Response"
+    name = "UserID"
     type = "S"
   }
 
   attribute {
-    name = "VoidTransactionID"
-    type = "S" # Index this attribute if you need to query by it
+    name = "ProcessorResponse"
+    type = "S"
   }
 
   attribute {
-    name = "Reason"
-    type = "S" # Index this attribute if you need to query by it
+    name = "IPAddress"
+    type = "S"
   }
 
   attribute {
-    name = "Source"
-    type = "S" # Added Source attribute
+    name = "Environment"
+    type = "S"
   }
 
   # Global Secondary Indexes (GSI)
   global_secondary_index {
-    name            = "TransactionID-Index"
+    name            = "TransactionID-Action-index"
     hash_key        = "TransactionID"
+    range_key       = "Action"
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
   }
 
   global_secondary_index {
-    name            = "Action-Index"
-    hash_key        = "Action"
+    name            = "TransactionType-index"
+    hash_key        = "TransactionType"
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
   }
 
   global_secondary_index {
-    name            = "Timestamp-Index"
-    hash_key        = "Timestamp"
+    name            = "Source-index"
+    hash_key        = "Source"
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
   }
 
   global_secondary_index {
-    name            = "Actor-Index"
-    hash_key        = "Actor"
+    name            = "Status-index"
+    hash_key        = "Status"
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
   }
 
   global_secondary_index {
-    name            = "QueryDetails-Index"
-    hash_key        = "QueryDetails"
+    name            = "UserID-index"
+    hash_key        = "UserID"
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
   }
 
   global_secondary_index {
-    name            = "Response-Index"
-    hash_key        = "Response"
-    projection_type = "ALL"
-    read_capacity   = 5
-    write_capacity  = 5
-  }
-
-  global_secondary_index {
-    name            = "VoidTransactionID-Index"
-    hash_key        = "VoidTransactionID"
-    projection_type = "ALL"
-    read_capacity   = 5
-    write_capacity  = 5
-  }
-
-  global_secondary_index {
-    name            = "Reason-Index"
-    hash_key        = "Reason"
-    projection_type = "ALL"
-    read_capacity   = 5
-    write_capacity  = 5
-  }
-
-  global_secondary_index {
-    name            = "Source-Index"
-    hash_key        = "Source" # Index for Source
+    name            = "Environment-index"
+    hash_key        = "Environment"
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
