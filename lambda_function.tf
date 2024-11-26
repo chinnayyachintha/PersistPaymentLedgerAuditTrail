@@ -3,16 +3,16 @@ resource "aws_lambda_function" "paymentledgeraudittrail" {
   role             = aws_iam_role.paymentaudittrail_role.arn
   handler          = "paymentledgeraudittrail.lambda_handler"
   runtime          = "python3.8"
-  filename         = "lambda_function/paymentledgeraudittrail.zip"
-  source_code_hash = filebase64sha256("lambda_function/paymentledgeraudittrail.zip")
+  filename         = "lambda_function/payment_process.zip"
+  source_code_hash = filebase64sha256("lambda_function/payment_process.zip")
 
   environment {
     variables = {
       DYNAMODB_LEDGER_TABLE_NAME = aws_dynamodb_table.payment_ledger.name
       DYNAMODB_AUDIT_TABLE_NAME  = aws_dynamodb_table.payment_audit_trail.name
       KMS_KEY_ARN                = aws_kms_alias.ledger_audit_key_alias.arn
-      ELAVON_API_URL             = var.elavon_api_url
-      ELAVON_API_KEY             = var.elavon_api_key
+      PROCESSOR_URL              = var.paynuity_api_url
+      API_KEY                    = var.paynuity_api_key
     }
   }
 
