@@ -1,111 +1,95 @@
+# payment_ledger
 resource "aws_dynamodb_table" "payment_ledger" {
-  name         = "${var.dynamodb_table_name}-Ledger"
-  billing_mode = "PAY_PER_REQUEST" # On-demand mode
-  hash_key     = "transaction_id"  # Partition Key
-  range_key    = "timestamp"       # Sort Key
+  name           = "${var.dynamodb_table_name}-Ledger"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "transaction_id"
+  range_key      = "process_type"
 
-  # Define the attributes
   attribute {
     name = "transaction_id"
     type = "S"
   }
+
   attribute {
-    name = "timestamp"
+    name = "process_type"
     type = "S"
   }
+
   attribute {
-    name = "amount"
-    type = "N"
-  }
-  attribute {
-    name = "currency"
+    name = "payment_processor"
     type = "S"
   }
-  attribute {
-    name = "payment_method"
-    type = "S"
-  }
-  attribute {
-    name = "payment_status"
-    type = "S"
-  }
-  attribute {
-    name = "transaction_type"
-    type = "S"
-  }
-  attribute {
-    name = "customer_id"
-    type = "S"
-  }
+
   attribute {
     name = "merchant_id"
     type = "S"
   }
+
   attribute {
-    name = "source"
+    name = "timestamp"
     type = "S"
   }
 
-  # Define the Global Secondary Indexes (GSIs)
-  global_secondary_index {
-    name            = "AmountIndex"
-    hash_key        = "transaction_id"
-    range_key       = "amount" # Use 'amount' in the range key for filtering
-    projection_type = "ALL"    # All attributes available
+  attribute {
+    name = "status"
+    type = "S"
+  }
+
+  attribute {
+    name = "error_code"
+    type = "S"
+  }
+
+  attribute {
+    name = "gateway_response"
+    type = "S"
+  }
+
+  attribute {
+    name = "response_details"
+    type = "S"
   }
 
   global_secondary_index {
-    name            = "CurrencyIndex"
-    hash_key        = "transaction_id"
-    range_key       = "currency" # Use 'currency' in the range key for filtering
-    projection_type = "ALL"      # All attributes available
+    name               = "payment_processor-index"
+    hash_key           = "payment_processor"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
   }
 
   global_secondary_index {
-    name            = "PaymentMethodIndex"
-    hash_key        = "transaction_id"
-    range_key       = "payment_method" # Use 'payment_method' in the range key
-    projection_type = "ALL"            # All attributes available
+    name               = "merchant_id-index"
+    hash_key           = "merchant_id"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
   }
 
   global_secondary_index {
-    name            = "PaymentStatusIndex"
-    hash_key        = "transaction_id"
-    range_key       = "payment_status" # Use 'payment_status' in the range key
-    projection_type = "ALL"            # All attributes available
+    name               = "status-index"
+    hash_key           = "status"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
   }
 
   global_secondary_index {
-    name            = "TransactionTypeIndex"
-    hash_key        = "transaction_id"
-    range_key       = "transaction_type" # Use 'transaction_type' in the range key
-    projection_type = "ALL"              # All attributes available
+    name               = "error_code-index"
+    hash_key           = "error_code"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
   }
 
   global_secondary_index {
-    name            = "SourceIndex"
-    hash_key        = "transaction_id"
-    range_key       = "source" # Use 'source' in the range key
-    projection_type = "ALL"    # All attributes available
+    name               = "gateway_response-index"
+    hash_key           = "gateway_response"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
   }
 
   global_secondary_index {
-    name            = "CustomerIdIndex"
-    hash_key        = "transaction_id"
-    range_key       = "customer_id" # Use 'customer_id' in the range key
-    projection_type = "ALL"         # All attributes available
-  }
-
-  global_secondary_index {
-    name            = "MerchantIdIndex"
-    hash_key        = "transaction_id"
-    range_key       = "merchant_id" # Use 'merchant_id' in the range key
-    projection_type = "ALL"         # All attributes available
-  }
-
-  # Enable Point-in-Time Recovery (PITR)
-  point_in_time_recovery {
-    enabled = true
+    name               = "response_details-index"
+    hash_key           = "response_details"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
   }
 
   tags = {
@@ -113,85 +97,100 @@ resource "aws_dynamodb_table" "payment_ledger" {
   }
 }
 
-resource "aws_dynamodb_table" "payment_audit_trail" {
-  name         = "${var.dynamodb_table_name}-AuditTrail"
-  billing_mode = "PAY_PER_REQUEST" # On-demand mode
-  hash_key     = "audit_id"        # Partition Key
-  range_key    = "timestamp"       # Sort Key
 
-  # Define the attributes
+# payment_audit_trail
+
+resource "aws_dynamodb_table" "payment_audit_trail" {
+  name           = "${var.dynamodb_table_name}-AuditTrail"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "audit_id"
+  range_key      = "transaction_id"
+
   attribute {
     name = "audit_id"
     type = "S"
   }
+
   attribute {
     name = "transaction_id"
     type = "S"
   }
-  attribute {
-    name = "action"
-    type = "S"
-  }
+
   attribute {
     name = "timestamp"
     type = "S"
   }
+
   attribute {
-    name = "source_ip"
+    name = "action_type"
     type = "S"
   }
-  attribute {
-    name = "action_details"
-    type = "S"
-  }
-  attribute {
-    name = "payment_result"
-    type = "S"
-  }
+
   attribute {
     name = "user_id"
     type = "S"
   }
 
-  # Define the Global Secondary Indexes (GSIs)
-  global_secondary_index {
-    name            = "PaymentResultIndex"
-    hash_key        = "transaction_id"
-    range_key       = "payment_result" # Use 'payment_result' in the range key
-    projection_type = "ALL"            # All attributes available
+  attribute {
+    name = "source_ip"
+    type = "S"
+  }
+
+  attribute {
+    name = "action_details"
+    type = "S"
+  }
+
+  attribute {
+    name = "payment_result"
+    type = "S"
+  }
+
+  attribute {
+    name = "error_code"
+    type = "S"
   }
 
   global_secondary_index {
-    name            = "SourceIpIndex"
-    hash_key        = "transaction_id"
-    range_key       = "source_ip" # Use 'source_ip' in the range key
-    projection_type = "ALL"       # All attributes available
+    name               = "transaction_id-index"
+    hash_key           = "transaction_id"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
   }
 
   global_secondary_index {
-    name            = "ActionDetailsIndex"
-    hash_key        = "action"
-    range_key       = "timestamp" # Use 'timestamp' for sorting
-    projection_type = "ALL"       # All attributes available
+    name               = "user_id-index"
+    hash_key           = "user_id"
+    range_key          = "action_type"
+    projection_type    = "ALL"
   }
 
   global_secondary_index {
-    name            = "UserIdIndex"
-    hash_key        = "transaction_id"
-    range_key       = "user_id" # Use 'user_id' in the range key
-    projection_type = "ALL"     # All attributes available
+    name               = "action_details-index"
+    hash_key           = "action_details"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
   }
 
   global_secondary_index {
-    name            = "ActionDetailsGSI" # New GSI for action_details
-    hash_key        = "action_details"
-    range_key       = "timestamp" # Sorting by timestamp
-    projection_type = "ALL"       # All attributes available
+    name               = "error_code-index"
+    hash_key           = "error_code"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
   }
 
-  # Enable Point-in-Time Recovery (PITR)
-  point_in_time_recovery {
-    enabled = true
+  global_secondary_index {
+    name               = "payment_result-index"
+    hash_key           = "payment_result"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
+  }
+
+  global_secondary_index {
+    name               = "source_ip-index"
+    hash_key           = "source_ip"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
   }
 
   tags = {
