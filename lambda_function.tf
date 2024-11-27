@@ -3,8 +3,8 @@ resource "aws_lambda_function" "paymentledgeraudittrail" {
   role             = aws_iam_role.paymentaudittrail_role.arn
   handler          = "paymentledgeraudittrail.lambda_handler"
   runtime          = "python3.8"
-  filename         = "lambda_function/payment_process.zip"
-  source_code_hash = filebase64sha256("lambda_function/payment_process.zip")
+  filename         = "lambda_function/paymentledgeraudittrail.zip"
+  source_code_hash = filebase64sha256("lambda_function/paymentledgeraudittrail.zip")
 
   environment {
     variables = {
