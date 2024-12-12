@@ -65,6 +65,11 @@ resource "aws_dynamodb_table" "payment_ledger" {
     type = "S"
   }
 
+  attribute {
+    name = "expiration_time"
+    type = "N"
+  }
+
   global_secondary_index {
     name            = "payment_processor-index"
     hash_key        = "payment_processor"
@@ -128,8 +133,18 @@ resource "aws_dynamodb_table" "payment_ledger" {
     projection_type = "ALL"
   }
 
+  ttl {
+    attribute_name = "expiration_time"
+    enabled        = true
+  }
+
   point_in_time_recovery {
     enabled = true
+  }
+
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = aws_kms_key.dynamodb_key.arn
   }
 
   tags = {
@@ -194,6 +209,11 @@ resource "aws_dynamodb_table" "payment_audit_trail" {
     type = "S"
   }
 
+  attribute {
+    name = "stage_name"
+    type = "S"
+  }
+
   global_secondary_index {
     name            = "transaction_id-index"
     hash_key        = "transaction_id"
@@ -243,8 +263,18 @@ resource "aws_dynamodb_table" "payment_audit_trail" {
     projection_type = "ALL"
   }
 
+  ttl {
+    attribute_name = "expiration_time"
+    enabled        = true
+  }
+
   point_in_time_recovery {
     enabled = true
+  }
+
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = aws_kms_key.dynamodb_key.arn
   }
 
   tags = {
